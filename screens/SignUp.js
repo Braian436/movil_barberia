@@ -71,7 +71,7 @@ export default function SignUp({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/logo.png')} style={styles.logo} />
+      <Image source={require('../assets/logo_barber.png')} style={styles.logo} />
       <Text style={styles.title}>Regístrate</Text>
 
       <Text style={styles.label}>Nombre</Text>

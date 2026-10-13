@@ -7,7 +7,7 @@ export default function Home({ navigation }) {
 
   const handleLogOut = async () => {
     try {
-      await signOut(auth);  
+      await signOut(auth);
       Alert.alert("Sesión cerrada", "Has cerrado sesión correctamente.");
       // El observador de Firebase muestra Login al cerrar la sesión.
     } catch (error) {
@@ -17,7 +17,7 @@ export default function Home({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/logo.png')} style={styles.logo} />
+      <Image source={require('../assets/logo_barber.png')} style={styles.logo} />
       <Text style={styles.title}>Bienvenido a la aplicación</Text>
       <TouchableOpacity style={styles.button} onPress={handleLogOut}>
         <Text style={styles.buttonText}>Cerrar sesión</Text>
@@ -57,4 +57,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-

@@ -12,8 +12,10 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../src/config/firebaseConfig';
 
@@ -21,6 +23,7 @@ const DORADO = '#a8844f';
 const SERIF = Platform.select({ ios: 'Georgia', android: 'serif' });
 
 export default function Login({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -81,13 +84,21 @@ export default function Login({ navigation }) {
     >
       <View style={styles.overlay} />
 
+      {/* behavior="padding" en AMBAS plataformas: con edge-to-edge (obligatorio
+          en Android 15/16 y en Expo SDK 54+) la ventana ya NO se redimensiona
+          sola al abrir el teclado, así que el teclado tapa el contenido.
+          "undefined"/"height" dejan de funcionar; "padding" empuja el contenido. */}
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.flex}
+        behavior="padding"
+        keyboardVerticalOffset={0}
       >
         <ScrollView
+          style={styles.flex}
           contentContainerStyle={styles.contenido}
           keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={Keyboard.dismiss}
+          showsVerticalScrollIndicator={false}
         >
           <Image source={require('../assets/logo_barber.png')} style={styles.logo} />
           <Text style={styles.titulo}>BARBERIA CLASE A</Text>
@@ -145,27 +156,35 @@ export default function Login({ navigation }) {
           <TouchableOpacity style={styles.olvido} onPress={handleReset}>
             <Text style={styles.olvidoTexto}>Olvidé mi contraseña</Text>
           </TouchableOpacity>
-          
         </ScrollView>
-      </KeyboardAvoidingView>
 
-      <View style={styles.footer}>
-        <Ionicons name="location-outline" size={18} color="#fff" />
-        <Text style={styles.footerTexto}>SALTA, ARGENTINA</Text>
-      </View>
+        {/* El footer va DENTRO del KeyboardAvoidingView y en flujo normal
+            (no absoluto) para que suba junto con el teclado en vez de quedar
+            tapado por él. */}
+        <View
+          style={[
+            styles.footer,
+            { height: 56 + insets.bottom, paddingBottom: insets.bottom },
+          ]}
+        >
+          <Ionicons name="location-outline" size={18} color="#fff" />
+          <Text style={styles.footerTexto}>SALTA, ARGENTINA</Text>
+        </View>
+      </KeyboardAvoidingView>
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: '#000' },
+  flex: { flex: 1 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
   contenido: {
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 28,
     paddingTop: 60,
-    paddingBottom: 80,
+    paddingBottom: 24,
   },
   logo: { width: 150, height: 150, alignSelf: 'center', resizeMode: 'contain' },
   titulo: {
@@ -214,11 +233,6 @@ const styles = StyleSheet.create({
   },
   olvidoTexto: { color: '#fff', fontSize: 12 },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

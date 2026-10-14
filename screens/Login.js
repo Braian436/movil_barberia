@@ -157,20 +157,20 @@ export default function Login({ navigation }) {
             <Text style={styles.olvidoTexto}>Olvidé mi contraseña</Text>
           </TouchableOpacity>
         </ScrollView>
-
-        {/* El footer va DENTRO del KeyboardAvoidingView y en flujo normal
-            (no absoluto) para que suba junto con el teclado en vez de quedar
-            tapado por él. */}
-        <View
-          style={[
-            styles.footer,
-            { height: 56 + insets.bottom, paddingBottom: insets.bottom },
-          ]}
-        >
-          <Ionicons name="location-outline" size={18} color="#fff" />
-          <Text style={styles.footerTexto}>SALTA, ARGENTINA</Text>
-        </View>
       </KeyboardAvoidingView>
+
+      {/* El footer queda FUERA del KeyboardAvoidingView: el KAV (flex:1) es el
+          que se encoge al abrir el teclado, y el footer, al ser un hermano en
+          flujo normal, se mantiene anclado abajo y NO sube. */}
+      <View
+        style={[
+          styles.footer,
+          { height: 56 + insets.bottom, paddingBottom: insets.bottom },
+        ]}
+      >
+        <Ionicons name="location-outline" size={18} color="#fff" />
+        <Text style={styles.footerTexto}>SALTA, ARGENTINA</Text>
+      </View>
     </ImageBackground>
   );
 }

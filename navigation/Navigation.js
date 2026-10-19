@@ -4,8 +4,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '../src/config/firebaseConfig';
+import { consumirSupresionLogin } from '../src/authFlow';
 import Login from '../screens/Login';
 import Home from '../screens/Home';
+import Productos from '../screens/Productos';
+import Registro from '../screens/SignUp';
+import RecuperarPassword from '../screens/RecuperarPassword';
 
 const Stack = createStackNavigator();
 
@@ -14,7 +18,12 @@ export default function Navigation() {
 
   useEffect(() => {
     if (!auth) return;
-    return onAuthStateChanged(auth, setUser);
+    return onAuthStateChanged(auth, (u) => {
+      // Al registrarse, Firebase inicia sesión solo. Ignoramos ese evento
+      // para no saltar a Home: el registro nos manda de vuelta al Login.
+      if (u && consumirSupresionLogin()) return;
+      setUser(u);
+    });
   }, []);
 
   if (!isFirebaseConfigured) {
@@ -35,9 +44,16 @@ export default function Navigation() {
     <NavigationContainer>
       <Stack.Navigator>
         {user ? (
-          <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
+          <>
+            <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
+            <Stack.Screen name="Productos" component={Productos} options={{ headerShown: false }} />
+          </>
         ) : (
-          <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+          <>
+            <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+            <Stack.Screen name="Registro" component={Registro} options={{ headerShown: false }} />
+            <Stack.Screen name="RecuperarPassword" component={RecuperarPassword} options={{ headerShown: false }} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '../src/config/firebaseConfig';
+import BarberHeader from '../components/BarberHeader';
+import BarberTabBar from '../components/BarberTabBar';
 
 const DORADO = '#b08d57';
 const SERIF = Platform.select({ ios: 'Georgia', android: 'serif' });
@@ -63,13 +65,8 @@ const SECCIONES = [
     imagen: require('../assets/card_productos.png'),
     alto: 150,
     ajuste: 'cover',
+    destino: 'Productos',
   },
-];
-
-const TABS = [
-  { key: 'inicio', label: 'Inicio', icono: 'home', activo: true },
-  { key: 'turnos', label: 'Turnos', icono: 'cut-outline' },
-  { key: 'perfil', label: 'Perfil', icono: 'person-outline' },
 ];
 
 export default function Home({ navigation }) {
@@ -103,25 +100,11 @@ export default function Home({ navigation }) {
       <StatusBar style="light" />
 
       {/* ---------- Header ---------- */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <View style={styles.headerLado}>
-          <TouchableOpacity onPress={abrirMenu} hitSlop={8}>
-            <Ionicons name="menu" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Image
-            source={require('../assets/logo_barber.png')}
-            style={styles.headerLogo}
-          />
-        </View>
-
-        <Text style={styles.headerTitulo}>Inicio</Text>
-
-        <View style={[styles.headerLado, styles.headerDerecha]}>
-          <TouchableOpacity onPress={() => seccionProximamente('Notificaciones')} hitSlop={8}>
-            <Ionicons name="notifications-outline" size={22} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <BarberHeader
+        titulo="Inicio"
+        onMenu={abrirMenu}
+        onCampana={() => seccionProximamente('Notificaciones')}
+      />
 
       {/* ---------- Contenido ---------- */}
       <ScrollView
@@ -157,7 +140,11 @@ export default function Home({ navigation }) {
               <Text style={styles.tarjetaDescripcion}>{item.descripcion}</Text>
               <TouchableOpacity
                 style={styles.tarjetaEnlace}
-                onPress={() => seccionProximamente(item.titulo)}
+                onPress={() =>
+                  item.destino
+                    ? navigation.navigate(item.destino)
+                    : seccionProximamente(item.titulo)
+                }
               >
                 <Text style={styles.tarjetaEnlaceTexto}>{item.enlace}</Text>
                 <Ionicons name="chevron-forward" size={12} color={DORADO} />
@@ -176,59 +163,13 @@ export default function Home({ navigation }) {
       </TouchableOpacity>
 
       {/* ---------- Tab bar ---------- */}
-      <View
-        style={[
-          styles.tabBar,
-          { height: 56 + insets.bottom, paddingBottom: insets.bottom },
-        ]}
-      >
-        {TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={styles.tab}
-            onPress={() => seccionProximamente(tab.label)}
-          >
-            <Ionicons
-              name={tab.icono}
-              size={20}
-              color={tab.activo ? DORADO : '#8a8a8a'}
-            />
-            <Text style={[styles.tabTexto, tab.activo && styles.tabTextoActivo]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <BarberTabBar activo="inicio" onPressTab={(tab) => seccionProximamente(tab.label)} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   pantalla: { flex: 1, backgroundColor: FONDO },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
-  },
-  headerLado: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerDerecha: { justifyContent: 'flex-end' },
-  headerLogo: { width: 26, height: 26, resizeMode: 'contain' },
-  headerTitulo: {
-    fontFamily: SERIF,
-    fontSize: 18,
-    color: DORADO,
-    letterSpacing: 0.5,
-  },
 
   // Contenido
   scroll: { flex: 1 },
@@ -314,15 +255,4 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
   },
-
-  // Tab bar
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: '#0d0d0d',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
-  },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
-  tabTexto: { fontSize: 10.5, color: '#8a8a8a', letterSpacing: 0.3 },
-  tabTextoActivo: { color: DORADO },
 });

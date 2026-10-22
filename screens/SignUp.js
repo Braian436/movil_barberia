@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
 import { auth } from '../src/config/firebaseConfig';
+import { notificar } from '../src/notify';
+import AvisoModal from '../components/AvisoModal';
 import {
   activarSupresionLogin,
   desactivarSupresionLogin,
@@ -24,16 +25,37 @@ import {
 
 const DORADO = '#b08d57';
 const SERIF = Platform.select({ ios: 'Georgia', android: 'serif' });
-const VERDE = '#3d8b55';
-const VERDE_CLARO = '#3d7a4a';
+const VERDE = '#43c463';
+const ROJO = '#e05a5a';
 
-const emailValido = (valor) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor.trim());
-const telefonoValido = (valor) => {
-  const digitos = valor.replace(/\D/g, '');
-  return digitos.length >= 8 && /^[+\d\s()-]+$/.test(valor.trim());
-};
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 
-// Requisitos de la contraseña (según la referencia).
+// Dominios desechables / de prueba (para no llenar la base de correos basura).
+const DOMINIOS_BASURA = [
+  'mailinator.com',
+  'tempmail.com',
+  'temp-mail.org',
+  'guerrillamail.com',
+  '10minutemail.com',
+  'yopmail.com',
+  'throwawaymail.com',
+  'trashmail.com',
+  'sharklasers.com',
+  'getnada.com',
+  'dispostable.com',
+  'fakeinbox.com',
+  'maildrop.cc',
+  'mintemail.com',
+  'spam4.me',
+  'example.com',
+  'example.org',
+  'test.com',
+];
+
+// Solo letras (con acentos) y espacios.
+const NOMBRE_RE =
+  /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*$/;
+
 const REQUISITOS = [
   { texto: '8 caracteres', test: (p) => p.length >= 8 },
   { texto: 'Una letra mayúscula', test: (p) => /[A-Z]/.test(p) },
@@ -41,16 +63,47 @@ const REQUISITOS = [
   { texto: 'Un carácter especial (#@?%&)', test: (p) => /[#@?%&]/.test(p) },
 ];
 
-// Campo reutilizable: etiqueta + input con ícono + accesorio opcional (ojo/check).
-function Campo({ label, icono, right, ...props }) {
+function validarCorreo(valor) {
+  const correo = valor.trim().toLowerCase();
+  if (!EMAIL_RE.test(correo)) {
+    return 'Ingresá un correo válido, por ejemplo Usuario@email.com.';
+  }
+  const dominio = correo.split('@')[1];
+  if (DOMINIOS_BASURA.includes(dominio)) {
+    return 'Ese dominio no está permitido. Usá un correo real.';
+  }
+  return null;
+}
+
+function validarNombre(valor, campo) {
+  const v = valor.trim().replace(/\s+/g, ' ');
+  if (v.length < 2) return `Ingresá al menos 2 letras en ${campo}.`;
+  if (!NOMBRE_RE.test(v)) return `En ${campo} solo se permiten letras y espacios.`;
+  return null;
+}
+
+const telefonoValido = (valor) => {
+  const digitos = valor.replace(/\D/g, '');
+  return digitos.length >= 8 && /^[+\d\s()-]+$/.test(valor.trim());
+};
+
+// Campo reutilizable: etiqueta + input con ícono + accesorio opcional.
+function Campo({
+  label,
+  icono,
+  right,
+  containerStyle,
+  inputStyle,
+  ...props
+}) {
   return (
     <View>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.inputContainer}>
-        <Ionicons name={icono} size={18} color="#8a8a8a" style={styles.icon} />
+      <View style={[styles.inputContainer, containerStyle]}>
+        <Ionicons name={icono} size={18} color="#cfcfcf" style={styles.icon} />
         <TextInput
-          style={styles.input}
-          placeholderTextColor="#9a9a9a"
+          style={[styles.input, inputStyle]}
+          placeholderTextColor="rgba(255,255,255,0.55)"
           {...props}
         />
         {right}
@@ -72,12 +125,32 @@ export default function SignUp({ navigation }) {
   const [verConfirm, setVerConfirm] = useState(false);
   const [cargando, setCargando] = useState(false);
 
-  const correoOk = emailValido(email);
+  // Modal de éxito (en vez del Alert blanco del sistema).
+  const [exitoVisible, setExitoVisible] = useState(false);
+  const [emailRegistrado, setEmailRegistrado] = useState('');
+
+  const correoError = validarCorreo(email);
+  const correoOk = email.trim().length > 0 && !correoError;
+
+  const cumpleRequisitos = REQUISITOS.every((r) => r.test(password));
+  const coincide = confirmPassword.length > 0 && confirmPassword === password;
+
+  const passEstado =
+    password.length === 0 ? null : cumpleRequisitos ? 'ok' : 'error';
+  const confirmEstado =
+    confirmPassword.length === 0 ? null : coincide ? 'ok' : 'error';
+
+  const borde = (estado) =>
+    estado === 'ok'
+      ? styles.bordeOk
+      : estado === 'error'
+        ? styles.bordeError
+        : null;
 
   const handleSignUp = async () => {
-    const nombreLimpio = nombre.trim();
-    const apellidoLimpio = apellido.trim();
-    const emailLimpio = email.trim();
+    const nombreLimpio = nombre.trim().replace(/\s+/g, ' ');
+    const apellidoLimpio = apellido.trim().replace(/\s+/g, ' ');
+    const emailLimpio = email.trim().toLowerCase();
 
     if (
       !nombreLimpio ||
@@ -87,22 +160,40 @@ export default function SignUp({ navigation }) {
       !password ||
       !confirmPassword
     ) {
-      Alert.alert('Faltan datos', 'Todos los campos son obligatorios.');
+      notificar('error', 'Faltan datos', 'Todos los campos son obligatorios.');
       return;
     }
 
-    if (!emailValido(emailLimpio)) {
-      Alert.alert('Correo inválido', 'Ingresá un correo electrónico válido.');
+    const errorNombre = validarNombre(nombreLimpio, 'el nombre');
+    if (errorNombre) {
+      notificar('error', 'Nombre inválido', errorNombre);
+      return;
+    }
+
+    const errorApellido = validarNombre(apellidoLimpio, 'el apellido');
+    if (errorApellido) {
+      notificar('error', 'Apellido inválido', errorApellido);
+      return;
+    }
+
+    const errorCorreo = validarCorreo(emailLimpio);
+    if (errorCorreo) {
+      notificar('error', 'Correo inválido', errorCorreo);
       return;
     }
 
     if (!telefonoValido(telefono)) {
-      Alert.alert('Teléfono inválido', 'Ingresá un número de teléfono válido.');
+      notificar(
+        'error',
+        'Teléfono inválido',
+        'Ingresá un número de teléfono válido (mínimo 8 dígitos).'
+      );
       return;
     }
 
-    if (!REQUISITOS.every((r) => r.test(password))) {
-      Alert.alert(
+    if (!cumpleRequisitos) {
+      notificar(
+        'error',
         'Contraseña débil',
         'La contraseña no cumple con todos los requisitos.'
       );
@@ -110,7 +201,7 @@ export default function SignUp({ navigation }) {
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Las contraseñas no coinciden.');
+      notificar('error', 'Contraseñas distintas', 'Las contraseñas no coinciden.');
       return;
     }
 
@@ -135,21 +226,8 @@ export default function SignUp({ navigation }) {
       // que el usuario NO entre a Home: lo mandamos al Login a iniciar sesión.
       await signOut(auth);
 
-      Alert.alert(
-        'Registro exitoso',
-        'Tu cuenta fue creada correctamente. Ahora podés iniciar sesión con tu correo y contraseña.',
-        [
-          {
-            text: 'Ir a iniciar sesión',
-            onPress: () =>
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login', params: { email: emailLimpio } }],
-              }),
-          },
-        ],
-        { cancelable: false }
-      );
+      setEmailRegistrado(emailLimpio);
+      setExitoVisible(true);
     } catch (error) {
       console.error('Error de registro:', error.code, error.message);
       let msg = 'Hubo un problema al registrar el usuario.';
@@ -170,7 +248,7 @@ export default function SignUp({ navigation }) {
           msg = 'La clave API de Firebase no es válida. Revisá el archivo .env.';
           break;
       }
-      Alert.alert('Error', msg);
+      notificar('error', 'No se pudo registrar', msg);
     } finally {
       desactivarSupresionLogin();
       setCargando(false);
@@ -207,8 +285,11 @@ export default function SignUp({ navigation }) {
             </View>
           </ImageBackground>
 
-          {/* ---------- Panel del formulario ---------- */}
+          {/* ---------- Formulario ---------- */}
           <View style={styles.panel}>
+            <Text style={styles.incentivo}>
+              Completá tus datos para crear tu cuenta y formar parte de este gran equipo!.
+            </Text>
             <Text style={styles.obligatorios}>
               Todos los campos son obligatorios{' '}
               <Text style={styles.asterisco}>*</Text>
@@ -235,7 +316,7 @@ export default function SignUp({ navigation }) {
             <Campo
               label="CORREO ELECTRÓNICO"
               icono="mail-outline"
-              placeholder="example@email.com"
+              placeholder="Usuario@email.com"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -260,24 +341,35 @@ export default function SignUp({ navigation }) {
             <Campo
               label="CONTRASEÑA"
               icono="lock-closed-outline"
-              placeholder="••••••••••••"
+              placeholder="********"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!verPassword}
               autoCapitalize="none"
+              inputStyle={styles.inputPassword}
+              containerStyle={borde(passEstado)}
               right={
                 <TouchableOpacity onPress={() => setVerPassword(!verPassword)}>
                   <Ionicons
                     name={verPassword ? 'eye-outline' : 'eye-off-outline'}
                     size={20}
-                    color="#8a8a8a"
+                    color="#cfcfcf"
                   />
                 </TouchableOpacity>
               }
             />
 
-            {/* Requisitos que se van poniendo verdes */}
-            <View style={styles.requisitos}>
+            {/* Requisitos: rojo mientras no se cumplen, verde cuando sí. */}
+            <View
+              style={[
+                styles.requisitos,
+                cumpleRequisitos
+                  ? styles.bordeOk
+                  : password.length > 0
+                    ? styles.bordeError
+                    : null,
+              ]}
+            >
               <Text style={styles.requisitosTitulo}>
                 La contraseña debe tener al menos:
               </Text>
@@ -288,13 +380,13 @@ export default function SignUp({ navigation }) {
                     <View
                       style={[
                         styles.requisitoPunto,
-                        ok && styles.requisitoPuntoOk,
+                        { backgroundColor: ok ? VERDE : ROJO },
                       ]}
                     />
                     <Text
                       style={[
                         styles.requisitoTexto,
-                        ok && styles.requisitoTextoOk,
+                        { color: ok ? VERDE : ROJO },
                       ]}
                     >
                       {r.texto}
@@ -307,21 +399,36 @@ export default function SignUp({ navigation }) {
             <Campo
               label="CONFIRMAR CONTRASEÑA"
               icono="lock-closed-outline"
-              placeholder="••••••••••••"
+              placeholder="********"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!verConfirm}
               autoCapitalize="none"
+              inputStyle={styles.inputPassword}
+              containerStyle={borde(confirmEstado)}
               right={
                 <TouchableOpacity onPress={() => setVerConfirm(!verConfirm)}>
                   <Ionicons
                     name={verConfirm ? 'eye-outline' : 'eye-off-outline'}
                     size={20}
-                    color="#8a8a8a"
+                    color="#cfcfcf"
                   />
                 </TouchableOpacity>
               }
             />
+
+            {confirmPassword.length > 0 && (
+              <Text
+                style={[
+                  styles.ayuda,
+                  { color: coincide ? VERDE : ROJO },
+                ]}
+              >
+                {coincide
+                  ? 'Las contraseñas coinciden.'
+                  : 'Las contraseñas no coinciden.'}
+              </Text>
+            )}
 
             <TouchableOpacity
               style={[styles.boton, cargando && { opacity: 0.6 }]}
@@ -349,6 +456,20 @@ export default function SignUp({ navigation }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <AvisoModal
+        visible={exitoVisible}
+        titulo="Registro exitoso"
+        mensaje="Tu cuenta fue creada correctamente. Ahora iniciá sesión con tu correo y contraseña."
+        boton="Ir a iniciar sesión"
+        onPress={() => {
+          setExitoVisible(false);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login', params: { email: emailRegistrado } }],
+          });
+        }}
+      />
     </View>
   );
 }
@@ -382,23 +503,29 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
 
-  // Panel claro
+  // Formulario (mismos colores que el Login)
   panel: {
     flexGrow: 1,
-    backgroundColor: '#f2f0ec',
-    paddingHorizontal: 18,
-    paddingTop: 14,
-    paddingBottom: 28,
+    backgroundColor: '#0f0f0f',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 30,
+  },
+  incentivo: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 10,
   },
   obligatorios: {
-    color: '#8a8178',
+    color: 'rgba(255,255,255,0.55)',
     fontSize: 11,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   asterisco: { color: '#c0392b', fontWeight: '700' },
 
   label: {
-    color: '#6f6a63',
+    color: '#fff',
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
@@ -408,28 +535,44 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e9e6e0',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
-    borderColor: '#dcd8d1',
-    borderRadius: 6,
-    height: 46,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 10,
+    height: 48,
     paddingHorizontal: 12,
   },
   icon: { marginRight: 10 },
-  input: { flex: 1, color: '#2b2b2b', fontSize: 14 },
+  input: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 14,
+    height: '100%',
+    paddingVertical: 0,
+    textAlignVertical: 'center',
+  },
+  inputPassword: {
+    fontSize: 22,
+    letterSpacing: 3,
+    lineHeight: 26,
+    includeFontPadding: false,
+  },
+
+  bordeOk: { borderColor: VERDE },
+  bordeError: { borderColor: ROJO },
 
   // Requisitos
   requisitos: {
     marginTop: 12,
-    backgroundColor: '#eaf3ec',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: '#cfe3d3',
-    borderRadius: 6,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   requisitosTitulo: {
-    color: VERDE_CLARO,
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 11.5,
     marginBottom: 6,
   },
@@ -439,15 +582,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 3,
   },
-  requisitoPunto: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#b9b9b9',
-  },
-  requisitoPuntoOk: { backgroundColor: VERDE_CLARO },
-  requisitoTexto: { color: '#9a9a9a', fontSize: 11.5 },
-  requisitoTextoOk: { color: VERDE_CLARO },
+  requisitoPunto: { width: 6, height: 6, borderRadius: 3 },
+  requisitoTexto: { fontSize: 11.5 },
+
+  ayuda: { fontSize: 11.5, marginTop: 6 },
 
   // Botón y link
   boton: {
@@ -455,10 +593,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 46,
-    borderRadius: 6,
+    height: 48,
+    borderRadius: 8,
     backgroundColor: DORADO,
-    marginTop: 24,
+    marginTop: 22,
   },
   botonTexto: { color: '#fff', fontSize: 14, fontWeight: '700' },
   link: { alignSelf: 'center', marginTop: 18, paddingVertical: 6 },

@@ -47,6 +47,9 @@ export default function Login({ navigation, route }) {
   const [recordar, setRecordar] = useState(false);
   const [cargando, setCargando] = useState(false);
 
+  // El botón solo se habilita con un correo válido y una contraseña de 8+.
+  const puedeIngresar = EMAIL_RE.test(email.trim()) && password.length >= 8;
+
   useEffect(() => {
     let activo = true;
 
@@ -245,19 +248,30 @@ export default function Login({ navigation, route }) {
             </View>
 
             <TouchableOpacity
-              style={[styles.boton, cargando && { opacity: 0.6 }]}
+              style={[
+                styles.boton,
+                !puedeIngresar && styles.botonApagado,
+                cargando && { opacity: 0.6 },
+              ]}
               onPress={handleLogin}
-              disabled={cargando}
+              disabled={!puedeIngresar || cargando}
             >
               {cargando ? (
                 <ActivityIndicator color="#171512" />
               ) : (
                 <>
-                  <Text style={styles.botonTexto}>Iniciar sesión</Text>
+                  <Text
+                    style={[
+                      styles.botonTexto,
+                      !puedeIngresar && styles.botonTextoApagado,
+                    ]}
+                  >
+                    Iniciar sesión
+                  </Text>
                   <Ionicons
                     name="arrow-forward"
                     size={20}
-                    color="#171512"
+                    color={puedeIngresar ? '#171512' : '#7a7468'}
                     style={styles.botonFlecha}
                   />
                 </>
@@ -420,7 +434,9 @@ const styles = StyleSheet.create({
     backgroundColor: ORO_CLARO,
     marginTop: 24,
   },
+  botonApagado: { backgroundColor: '#3a342b' },
   botonTexto: { color: '#171512', fontSize: 17, fontWeight: '700' },
+  botonTextoApagado: { color: '#8a8375' },
   botonFlecha: { position: 'absolute', right: 18 },
 
   registro: { alignSelf: 'center', marginTop: 18, paddingVertical: 6 },

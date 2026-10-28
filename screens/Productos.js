@@ -38,6 +38,9 @@ const GRIS = '#9b9b9b';
 const VERDE = '#43c463';
 const ROJO = '#e05a5a';
 
+// Categorías precargadas para el menú desplegable.
+const CATEGORIAS = ['Pomada', 'Shampoo', 'Aceite', 'Cera', 'Tinte'];
+
 const PRODUCTO_VACIO = {
   nombre: '',
   categoria: '',
@@ -45,7 +48,6 @@ const PRODUCTO_VACIO = {
   descripcion: '',
   precio: '',
   stock: '',
-  imagenUrl: '',
   activo: true,
 };
 
@@ -65,7 +67,6 @@ function productoAFormulario(producto) {
     descripcion: producto.descripcion,
     precio: String(producto.precio),
     stock: String(producto.stock),
-    imagenUrl: producto.imagenUrl,
     activo: producto.activo,
   };
 }
@@ -75,7 +76,7 @@ function validarFormulario(form) {
   if (!nombre) return 'Ingresá el nombre del producto.';
   if (nombre.length > 80) return 'El nombre no puede superar los 80 caracteres.';
 
-  if (!form.categoria.trim()) return 'Ingresá una categoría.';
+  if (!form.categoria.trim()) return 'Seleccioná una categoría.';
 
   const precio = aNumero(form.precio);
   if (!String(form.precio).trim() || Number.isNaN(precio) || precio < 0) {
@@ -92,11 +93,6 @@ function validarFormulario(form) {
     return 'Ingresá un stock válido (número entero).';
   }
 
-  const imagenUrl = form.imagenUrl.trim();
-  if (imagenUrl && !/^https?:\/\//i.test(imagenUrl)) {
-    return 'La URL de la imagen debe empezar con http:// o https://.';
-  }
-
   return null;
 }
 
@@ -108,7 +104,6 @@ function datosDesdeFormulario(form) {
     descripcion: form.descripcion.trim(),
     precio: Math.round(aNumero(form.precio)),
     stock: Math.round(aNumero(form.stock)),
-    imagenUrl: form.imagenUrl.trim(),
     activo: form.activo,
   };
 }
@@ -254,6 +249,7 @@ export default function Productos({ navigation }) {
   const [editandoId, setEditandoId] = useState(null);
   const [form, setForm] = useState(PRODUCTO_VACIO);
   const [guardando, setGuardando] = useState(false);
+  const [categoriaVisible, setCategoriaVisible] = useState(false);
 
   // Modal rápido para añadir stock.
   const [stockVisible, setStockVisible] = useState(false);
@@ -294,12 +290,14 @@ export default function Productos({ navigation }) {
   const abrirRegistrar = () => {
     setEditandoId(null);
     setForm({ ...PRODUCTO_VACIO });
+    setCategoriaVisible(false);
     setFormVisible(true);
   };
 
   const abrirEditar = (producto) => {
     setEditandoId(producto.id);
     setForm(productoAFormulario(producto));
+    setCategoriaVisible(false);
     setFormVisible(true);
   };
 
@@ -307,6 +305,7 @@ export default function Productos({ navigation }) {
     setFormVisible(false);
     setEditandoId(null);
     setForm({ ...PRODUCTO_VACIO });
+    setCategoriaVisible(false);
   };
 
   const guardarProducto = async () => {
@@ -436,13 +435,18 @@ export default function Productos({ navigation }) {
       { text: 'Cancelar', style: 'cancel' },
     ]);
 
+  // Si el producto tiene una categoría que no está en la lista, la incluimos.
+  const opcionesCategoria =
+    form.categoria && !CATEGORIAS.includes(form.categoria)
+      ? [form.categoria, ...CATEGORIAS]
+      : CATEGORIAS;
+
   return (
     <View style={styles.pantalla}>
       <StatusBar style="light" />
 
       <BarberHeader
         titulo="Productos"
-        onMenu={abrirMenu}
         onCampana={() => Alert.alert('Notificaciones', 'Próximamente.')}
       />
 
@@ -511,6 +515,7 @@ export default function Productos({ navigation }) {
         activo="inicio"
         onPressTab={(tab) => {
           if (tab.key === 'inicio') navigation.navigate('Home');
+          else if (tab.key === 'perfil') abrirMenu();
         }}
       />
 
@@ -559,14 +564,67 @@ export default function Productos({ navigation }) {
                 maxLength={80}
               />
 
-              <Campo
-                label="CATEGORÍA *"
-                icono="albums-outline"
-                placeholder="Ej: Pomada, Shampoo, Aceite"
-                value={form.categoria}
-                onChangeText={cambiarCampo('categoria')}
-                autoCapitalize="sentences"
-              />
+              <View style={styles.campo}>
+                <Text style={styles.campoLabel}>CATEGORÍA *</Text>
+                <TouchableOpacity
+                  style={styles.campoContenedor}
+                  activeOpacity={0.8}
+                  onPress={() => setCategoriaVisible((v) => !v)}
+                >
+                  <Ionicons
+                    name="albums-outline"
+                    size={16}
+                    color={GRIS}
+                    style={styles.campoIcono}
+                  />
+                  <Text
+                    style={[
+                      styles.campoInput,
+                      !form.categoria && styles.campoPlaceholder,
+                    ]}
+                  >
+                    {form.categoria || 'Seleccioná una categoría'}
+                  </Text>
+                  <Ionicons
+                    name={categoriaVisible ? 'chevron-up' : 'chevron-down'}
+                    size={18}
+                    color={GRIS}
+                  />
+                </TouchableOpacity>
+
+                {categoriaVisible && (
+                  <View style={styles.opcionesCategoria}>
+                    {opcionesCategoria.map((cat) => {
+                      const seleccionada = form.categoria === cat;
+                      return (
+                        <TouchableOpacity
+                          key={cat}
+                          style={[
+                            styles.opcionCategoria,
+                            seleccionada && styles.opcionCategoriaActiva,
+                          ]}
+                          onPress={() => {
+                            setForm((prev) => ({ ...prev, categoria: cat }));
+                            setCategoriaVisible(false);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.opcionCategoriaTexto,
+                              seleccionada && styles.opcionCategoriaTextoActiva,
+                            ]}
+                          >
+                            {cat}
+                          </Text>
+                          {seleccionada && (
+                            <Ionicons name="checkmark" size={16} color={DORADO} />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
 
               <Campo
                 label="MARCA"
@@ -608,17 +666,6 @@ export default function Productos({ navigation }) {
                 onChangeText={cambiarCampo('descripcion')}
                 multiline
                 estiloInput={styles.campoMultilinea}
-              />
-
-              <Campo
-                label="IMAGEN (URL)"
-                icono="link-outline"
-                placeholder="https://..."
-                value={form.imagenUrl}
-                onChangeText={cambiarCampo('imagenUrl')}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="url"
               />
 
               <TouchableOpacity
@@ -953,6 +1000,27 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     paddingTop: 12,
   },
+  campoPlaceholder: { color: '#666' },
+  opcionesCategoria: {
+    marginTop: 6,
+    backgroundColor: '#111',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  opcionCategoria: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  opcionCategoriaActiva: { backgroundColor: 'rgba(176,141,87,0.15)' },
+  opcionCategoriaTexto: { color: '#ddd', fontSize: 14 },
+  opcionCategoriaTextoActiva: { color: DORADO, fontWeight: '700' },
   filaCampos: { flexDirection: 'row', gap: 12 },
   mitad: { flex: 1 },
 

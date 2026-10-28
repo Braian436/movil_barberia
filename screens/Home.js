@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '../src/config/firebaseConfig';
 import BarberHeader from '../components/BarberHeader';
@@ -70,8 +69,6 @@ const SECCIONES = [
 ];
 
 export default function Home({ navigation }) {
-  const insets = useSafeAreaInsets();
-
   const handleLogOut = async () => {
     try {
       await signOut(auth);
@@ -102,7 +99,6 @@ export default function Home({ navigation }) {
       {/* ---------- Header ---------- */}
       <BarberHeader
         titulo="Inicio"
-        onMenu={abrirMenu}
         onCampana={() => seccionProximamente('Notificaciones')}
       />
 
@@ -154,16 +150,14 @@ export default function Home({ navigation }) {
         ))}
       </ScrollView>
 
-      {/* ---------- Botón flotante ---------- */}
-      <TouchableOpacity
-        style={[styles.fab, { bottom: 56 + insets.bottom + 16 }]}
-        onPress={() => seccionProximamente('Acción rápida')}
-      >
-        <Ionicons name="add" size={26} color={DORADO} />
-      </TouchableOpacity>
-
       {/* ---------- Tab bar ---------- */}
-      <BarberTabBar activo="inicio" onPressTab={(tab) => seccionProximamente(tab.label)} />
+      <BarberTabBar
+        activo="inicio"
+        onPressTab={(tab) => {
+          if (tab.key === 'perfil') abrirMenu();
+          else seccionProximamente(tab.label);
+        }}
+      />
     </View>
   );
 }
@@ -235,24 +229,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-  },
-
-  // Botón flotante
-  fab: {
-    position: 'absolute',
-    right: 18,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#191919',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
   },
 });

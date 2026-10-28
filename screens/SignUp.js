@@ -56,6 +56,10 @@ const DOMINIOS_BASURA = [
 const NOMBRE_RE =
   /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*$/;
 
+// Limpia lo que el usuario escribe: deja únicamente letras y espacios.
+const soloLetras = (valor) =>
+  valor.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g, '');
+
 const REQUISITOS = [
   { texto: '8 caracteres', test: (p) => p.length >= 8 },
   { texto: 'Una letra mayúscula', test: (p) => /[A-Z]/.test(p) },
@@ -300,7 +304,7 @@ export default function SignUp({ navigation }) {
               icono="person-outline"
               placeholder="Ej: José Roberto"
               value={nombre}
-              onChangeText={setNombre}
+              onChangeText={(valor) => setNombre(soloLetras(valor))}
               autoCapitalize="words"
             />
 
@@ -309,7 +313,7 @@ export default function SignUp({ navigation }) {
               icono="person-outline"
               placeholder="Ej: Montero"
               value={apellido}
-              onChangeText={setApellido}
+              onChangeText={(valor) => setApellido(soloLetras(valor))}
               autoCapitalize="words"
             />
 

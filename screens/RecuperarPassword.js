@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -13,48 +12,58 @@ import { Ionicons } from '@expo/vector-icons';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../src/config/firebaseConfig';
 import AuthLayout from '../components/AuthLayout';
+import { notificar } from '../src/notify';
 
 const DORADO = '#b08d57';
 const GRIS_CLARO = 'rgba(255,255,255,0.75)';
 const VERDE = '#43c463';
-
-const emailValido = (valor) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor.trim());
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 
 export default function RecuperarPassword({ navigation, route }) {
   const [email, setEmail] = useState(route?.params?.email ?? '');
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
 
-  const correoOk = emailValido(email);
+  const correoOk = EMAIL_RE.test(email.trim());
 
   const handleEnviar = async () => {
     if (!correoOk) {
-      Alert.alert('Correo inválido', 'Ingresá un correo electrónico válido.');
+      notificar(
+        'error',
+        'Correo inválido',
+        'Ingresá un correo válido, por ejemplo Usuario@email.com'
+      );
       return;
     }
 
     setCargando(true);
     try {
       await sendPasswordResetEmail(auth, email.trim());
+      // Firebase manda el correo solo si la cuenta existe.
       setEnviado(true);
     } catch (error) {
       console.error('Error al enviar el correo:', error.code, error.message);
-      let msg = 'No se pudo enviar el correo. Intentá de nuevo.';
+      let titulo = 'No se pudo enviar';
+      let msg = 'Intentá de nuevo en unos minutos.';
       switch (error.code) {
         case 'auth/invalid-email':
-          msg = 'El correo no es válido.';
+          titulo = 'Correo inválido';
+          msg = 'El correo no tiene un formato válido.';
           break;
         case 'auth/user-not-found':
-          msg = 'No existe una cuenta con ese correo.';
+          titulo = 'Correo no registrado';
+          msg = 'No encontramos una cuenta con ese correo.';
           break;
         case 'auth/too-many-requests':
-          msg = 'Demasiados intentos. Probá de nuevo más tarde.';
+          titulo = 'Demasiados intentos';
+          msg = 'Probá de nuevo más tarde.';
           break;
         case 'auth/network-request-failed':
-          msg = 'Error de conexión. Revisá tu internet.';
+          titulo = 'Sin conexión';
+          msg = 'Revisá tu conexión a internet.';
           break;
       }
-      Alert.alert('Error', msg);
+      notificar('error', titulo, msg);
     } finally {
       setCargando(false);
     }
@@ -63,7 +72,7 @@ export default function RecuperarPassword({ navigation, route }) {
   // ---------- Paso 2: confirmación ----------
   if (enviado) {
     return (
-      <AuthLayout>
+      <AuthLayout onVolver={() => navigation.goBack()}>
         <StatusBar style="light" />
 
         <View style={styles.exitoCard}>
@@ -73,9 +82,10 @@ export default function RecuperarPassword({ navigation, route }) {
 
           <Text style={styles.exitoTitulo}>Revisá tu correo</Text>
           <Text style={styles.exitoTexto}>
-            Te enviamos un enlace a{' '}
-            <Text style={styles.exitoEmail}>{email.trim()}</Text> para que crees
-            tu nueva contraseña. Revisá también la carpeta de spam.
+            Si el correo{' '}
+            <Text style={styles.exitoEmail}>{email.trim()}</Text> está
+            registrado, te enviamos un mensaje para que crees tu nueva
+            contraseña. Revisá también la carpeta de spam.
           </Text>
 
           <TouchableOpacity
@@ -91,7 +101,7 @@ export default function RecuperarPassword({ navigation, route }) {
 
   // ---------- Paso 1: pedir correo ----------
   return (
-    <AuthLayout>
+    <AuthLayout onVolver={() => navigation.goBack()}>
       <StatusBar style="light" />
 
       <Text style={styles.titulo}>Recuperá tu contraseña</Text>
@@ -110,8 +120,8 @@ export default function RecuperarPassword({ navigation, route }) {
         />
         <TextInput
           style={styles.input}
-          placeholder="example@email.com"
-          placeholderTextColor="rgba(255,255,255,0.6)"
+          placeholder="Usuario@email.com"
+          placeholderTextColor="rgba(255,255,255,0.55)"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -138,8 +148,8 @@ export default function RecuperarPassword({ navigation, route }) {
       <View style={styles.infoRow}>
         <Ionicons name="mail-outline" size={18} color={GRIS_CLARO} />
         <Text style={styles.infoTexto}>
-          Recibirás un correo para restablecer tu contraseña. Revisá también la
-          carpeta de spam.
+          Si el correo está registrado, vas a recibir un mensaje de
+          recuperación. Revisá también la carpeta de spam.
         </Text>
       </View>
 

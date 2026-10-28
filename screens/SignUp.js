@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
   inputPassword: {
-    fontSize: 22,
+    fontSize: 14,
     letterSpacing: 3,
     lineHeight: 26,
     includeFontPadding: false,

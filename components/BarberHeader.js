@@ -17,18 +17,14 @@ const SERIF = Platform.select({ ios: 'Georgia', android: 'serif' });
  * Header reutilizable para las pantallas de la app.
  * Props:
  *   - titulo   : texto que va centrado (por defecto "Inicio").
- *   - onMenu   : se llama al tocar el ícono de menú (☰).
  *   - onCampana: se llama al tocar la campana.
  */
-export default function BarberHeader({ titulo = 'Inicio', onMenu, onCampana }) {
+export default function BarberHeader({ titulo = 'Inicio', onCampana }) {
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
       <View style={styles.lado}>
-        <TouchableOpacity onPress={onMenu} hitSlop={8}>
-          <Ionicons name="menu" size={24} color="#fff" />
-        </TouchableOpacity>
         <Image
           source={require('../assets/logo_barber.png')}
           style={styles.logo}

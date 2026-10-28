@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,7 +25,7 @@ const SERIF = Platform.select({ ios: 'Georgia', android: 'serif' });
  * Incluye el KeyboardAvoidingView con behavior="padding" (necesario con
  * edge-to-edge) y el footer FUERA del KAV para que no suba con el teclado.
  */
-export default function AuthLayout({ children, contentContainerStyle }) {
+export default function AuthLayout({ children, contentContainerStyle, onVolver }) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -34,6 +35,16 @@ export default function AuthLayout({ children, contentContainerStyle }) {
       resizeMode="cover"
     >
       <View style={styles.overlay} />
+
+      {onVolver && (
+        <TouchableOpacity
+          style={[styles.volverAtras, { top: insets.top + 8 }]}
+          onPress={onVolver}
+          hitSlop={8}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+      )}
 
       <KeyboardAvoidingView
         style={styles.flex}
@@ -74,6 +85,12 @@ const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: '#000' },
   flex: { flex: 1 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
+  volverAtras: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 10,
+    padding: 6,
+  },
   contenido: {
     flexGrow: 1,
     justifyContent: 'center',

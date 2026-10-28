@@ -37,6 +37,9 @@ Si `npm ci` indica que faltan archivos o que el lockfile no coincide, usar `npm 
 4. Registrar la aplicación y conservar el objeto `firebaseConfig`.
 5. Entrar en **Authentication > Método de acceso**.
 6. Agregar y habilitar **Correo electrónico/contraseña**.
+7. Entrar en **Firestore Database**, pulsar **Crear base de datos** y crearla
+   en **modo producción**. La colección `productos` se crea sola al guardar el
+   primer producto.
 
 ## 3. Agregar la configuración Firebase
 
@@ -89,6 +92,17 @@ Para detener el servidor, presionar `Ctrl+C`.
 4. Comprobar el usuario en **Firebase > Authentication > Usuarios**.
 5. Cerrar sesión e iniciar sesión con la misma cuenta.
 6. Cerrar y volver a abrir Expo Go para comprobar que la sesión se conserva.
+
+## 6. Productos en Firestore
+
+La pantalla **Productos** permite registrar, listar, editar, cambiar el stock,
+activar/desactivar y eliminar productos. Todo se guarda en la colección
+`productos` de Firestore (sin claves foráneas).
+
+Antes de probarla, publicar las reglas de seguridad de
+[`docs/firestore.rules`](docs/firestore.rules) en **Firestore > Reglas**.
+El detalle de los campos y los pasos está en
+[`docs/productos-firestore.md`](docs/productos-firestore.md).
 
 ## Soluciones rápidas
 

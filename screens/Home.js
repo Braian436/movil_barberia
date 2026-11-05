@@ -29,33 +29,33 @@ const GRIS = '#9b9b9b';
 //   - 'cover'   -> llena el ancho recortando un poco arriba/abajo (fotos).
 //   - 'contain' -> muestra la imagen completa con fondo negro (el gráfico).
 const SECCIONES = [
-  {
-    key: 'empleados',
-    titulo: 'EMPLEADOS',
-    descripcion: 'Administrar empleados.',
-    enlace: 'VER EMPLEADOS',
-    imagen: require('../assets/card_empleado.png'),
-    alto: 150,
-    ajuste: 'cover',
-  },
-  {
-    key: 'estadisticas',
-    titulo: 'ESTADISTICAS',
-    descripcion: 'Estadísticas de empleados, ganancias y asistencias.',
-    enlace: 'VER ESTADISTICAS',
-    imagen: require('../assets/card_estadistica.png'),
-    alto: 150,
-    ajuste: 'contain',
-  },
-  {
-    key: 'servicios',
-    titulo: 'SERVICIOS',
-    descripcion: 'Administrar servicios.',
-    enlace: 'VER SERVICIOS',
-    imagen: require('../assets/card_servicios.png'),
-    alto: 150,
-    ajuste: 'cover',
-  },
+  // {
+  //   key: 'empleados',
+  //   titulo: 'EMPLEADOS',
+  //   descripcion: 'Administrar empleados.',
+  //   enlace: 'VER EMPLEADOS',
+  //   imagen: require('../assets/card_empleado.png'),
+  //   alto: 150,
+  //   ajuste: 'cover',
+  // },
+  // {
+  //   key: 'estadisticas',
+  //   titulo: 'ESTADISTICAS',
+  //   descripcion: 'Estadísticas de empleados, ganancias y asistencias.',
+  //   enlace: 'VER ESTADISTICAS',
+  //   imagen: require('../assets/card_estadistica.png'),
+  //   alto: 150,
+  //   ajuste: 'contain',
+  // },
+  // {
+  //   key: 'servicios',
+  //   titulo: 'SERVICIOS',
+  //   descripcion: 'Administrar servicios.',
+  //   enlace: 'VER SERVICIOS',
+  //   imagen: require('../assets/card_servicios.png'),
+  //   alto: 150,
+  //   ajuste: 'cover',
+  // },
   {
     key: 'productos',
     titulo: 'PRODUCTOS',
@@ -89,7 +89,7 @@ export default function Home({ navigation }) {
 
   // Placeholder: cuando existan las pantallas, acá se navega.
   const seccionProximamente = (titulo) => {
-    Alert.alert(titulo, 'Esta sección estará disponible próximamente.');
+    Alert.alert(titulo, 'Este apartaado estará disponible próximamente.');
   };
 
   return (
@@ -118,9 +118,9 @@ export default function Home({ navigation }) {
 
         <TouchableOpacity
           style={styles.botonEmpleados}
-          onPress={() => seccionProximamente('Registrar empleados')}
+          onPress={() => seccionProximamente('Registrar secciones')}
         >
-          <Text style={styles.botonEmpleadosTexto}>Registrar empleados</Text>
+          <Text style={styles.botonEmpleadosTexto}>Registrar secciones</Text>
           <Ionicons name="chevron-forward" size={14} color="#fff" />
         </TouchableOpacity>
 

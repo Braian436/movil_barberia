@@ -7,7 +7,6 @@ const DORADO = '#b08d57';
 
 const TABS = [
   { key: 'inicio', label: 'Inicio', icono: 'home' },
-  { key: 'turnos', label: 'Turnos', icono: 'cut-outline' },
   { key: 'perfil', label: 'Perfil', icono: 'person-outline' },
 ];
 

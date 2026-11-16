@@ -1,151 +1,51 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  increment,
-  onSnapshot,
-  serverTimestamp,
-  updateDoc,
-} from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 
-// Colección "productos". No tiene claves foráneas: categoría y marca se
-// guardan como texto dentro de cada documento.
-export const COLECCION_PRODUCTOS = 'productos';
+const COL = 'productos';
+const texto = (v) => String(v ?? '').trim();
+const numero = (v) => Math.max(0, Number(v) || 0);
 
-const texto = (valor) => String(valor ?? '').trim();
-
-// Convierte cualquier documento de Firestore al formato que usa la pantalla.
-function mapearProducto(snap) {
-  const datos = snap.data() || {};
-
+const mapear = (s) => {
+  const d = s.data() || {};
   return {
-    id: snap.id,
-    nombre: texto(datos.nombre),
-    categoria: texto(datos.categoria),
-    marca: texto(datos.marca),
-    descripcion: texto(datos.descripcion),
-    precio: Number(datos.precio) || 0,
-    stock: Number(datos.stock) || 0,
-    activo: datos.activo !== false,
-    imagenUrl: texto(datos.imagenUrl),
+    id: s.id,
+    nombre: texto(d.nombre),
+    categoria: texto(d.categoria),
+    precio: numero(d.precio),
+    stock: Math.round(numero(d.stock)),
+    activo: d.activo !== false,
   };
-}
+};
 
-// Solo normaliza los campos que vienen en `datos`. Así `actualizarProducto`
-// puede recibir cambios parciales (por ejemplo, únicamente { activo: false }).
-function normalizarCampos(datos) {
-  const salida = {};
+const campos = (d) => {
+  const o = {};
+  if ('nombre' in d) o.nombre = texto(d.nombre);
+  if ('categoria' in d) o.categoria = texto(d.categoria);
+  if ('precio' in d) o.precio = numero(d.precio);
+  if ('stock' in d) o.stock = Math.round(numero(d.stock));
+  if ('activo' in d) o.activo = d.activo !== false;
+  return o;
+};
 
-  if ('nombre' in datos) salida.nombre = texto(datos.nombre);
-  if ('categoria' in datos) salida.categoria = texto(datos.categoria);
-  if ('marca' in datos) salida.marca = texto(datos.marca);
-  if ('descripcion' in datos) salida.descripcion = texto(datos.descripcion);
-  if ('precio' in datos) salida.precio = Math.max(0, Math.round(Number(datos.precio) || 0));
-  if ('stock' in datos) salida.stock = Math.max(0, Math.round(Number(datos.stock) || 0));
-  if ('activo' in datos) salida.activo = datos.activo !== false;
-  if ('imagenUrl' in datos) salida.imagenUrl = texto(datos.imagenUrl) || null;
-
-  return salida;
-}
-
-function asegurarDb() {
-  if (!db) {
-    throw new Error('Firebase no está configurado. Revisá el archivo .env.');
-  }
-}
-
-/**
- * Escucha la colección en tiempo real. Devuelve la función para cancelar.
- * Los productos se ordenan alfabéticamente en el cliente para no necesitar
- * índices ni campos obligatorios en Firestore.
- */
-export function suscribirProductos({ onCambios, onError }) {
-  if (!db) {
-    onError?.(new Error('Firebase no está configurado. Revisá el archivo .env.'));
-    return () => {};
-  }
-
-  return onSnapshot(
-    collection(db, COLECCION_PRODUCTOS),
-    (snapshot) => {
-      const productos = snapshot.docs
-        .map(mapearProducto)
-        .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-
-      onCambios(productos);
-    },
-    (error) => onError?.(error)
+export const suscribirProductos = ({ onCambios, onError }) =>
+  onSnapshot(
+    collection(db, COL),
+    (snap) => onCambios(snap.docs.map(mapear).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))),
+    onError
   );
-}
 
-export async function crearProducto(datos) {
-  asegurarDb();
+export const crearProducto = (datos) =>
+  addDoc(collection(db, COL), { ...campos(datos), creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp() });
 
-  const campos = normalizarCampos({
-    nombre: datos.nombre,
-    categoria: datos.categoria,
-    marca: datos.marca,
-    descripcion: datos.descripcion,
-    precio: datos.precio,
-    stock: datos.stock,
-    activo: datos.activo,
-    imagenUrl: datos.imagenUrl,
-  });
+export const actualizarProducto = (id, cambios) =>
+  updateDoc(doc(db, COL, id), { ...campos(cambios), actualizadoEn: serverTimestamp() });
 
-  const referencia = await addDoc(collection(db, COLECCION_PRODUCTOS), {
-    ...campos,
-    creadoEn: serverTimestamp(),
-    actualizadoEn: serverTimestamp(),
-  });
+export const eliminarProducto = (id) => deleteDoc(doc(db, COL, id));
 
-  return referencia.id;
-}
-
-export async function actualizarProducto(id, cambios) {
-  asegurarDb();
-
-  const campos = normalizarCampos(cambios);
-  if (!Object.keys(campos).length) return;
-
-  await updateDoc(doc(db, COLECCION_PRODUCTOS, id), {
-    ...campos,
-    actualizadoEn: serverTimestamp(),
-  });
-}
-
-// Suma (o resta, si es negativo) stock de forma atómica en el servidor.
-export async function ajustarStock(id, cantidad) {
-  asegurarDb();
-
-  await updateDoc(doc(db, COLECCION_PRODUCTOS, id), {
-    stock: increment(Math.round(Number(cantidad) || 0)),
-    actualizadoEn: serverTimestamp(),
-  });
-}
-
-export async function eliminarProducto(id) {
-  asegurarDb();
-  await deleteDoc(doc(db, COLECCION_PRODUCTOS, id));
-}
-
-// Mensajes claros para los errores más comunes de Firestore.
-export function mensajeErrorFirestore(error) {
-  const codigo = error?.code || '';
-
-  if (codigo.includes('permission-denied')) {
-    return 'Firestore rechazó la operación. Revisá que la base esté creada y que las reglas permitan a usuarios autenticados.';
-  }
-  if (codigo.includes('unavailable')) {
-    return 'No hay conexión con Firestore. Revisá tu internet e intentá de nuevo.';
-  }
-  if (codigo.includes('failed-precondition')) {
-    return 'Firestore no está habilitado en el proyecto. Creá la base de datos en la consola de Firebase.';
-  }
-  if (codigo.includes('not-found')) {
-    return 'El producto ya no existe en la base de datos.';
-  }
-
-  return error?.message || 'Ocurrió un error al hablar con Firebase.';
-}
+export const mensajeErrorFirestore = (e) => {
+  const c = e?.code || '';
+  if (c.includes('permission-denied')) return 'Firestore rechazó la operación. Revisá las reglas.';
+  if (c.includes('unavailable')) return 'Sin conexión con Firestore.';
+  if (c.includes('failed-precondition')) return 'Firestore no está habilitado.';
+  return e?.message || 'Error con Firebase.';
+};

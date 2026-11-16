@@ -29,33 +29,6 @@ const GRIS = '#9b9b9b';
 //   - 'cover'   -> llena el ancho recortando un poco arriba/abajo (fotos).
 //   - 'contain' -> muestra la imagen completa con fondo negro (el gráfico).
 const SECCIONES = [
-  // {
-  //   key: 'empleados',
-  //   titulo: 'EMPLEADOS',
-  //   descripcion: 'Administrar empleados.',
-  //   enlace: 'VER EMPLEADOS',
-  //   imagen: require('../assets/card_empleado.png'),
-  //   alto: 150,
-  //   ajuste: 'cover',
-  // },
-  // {
-  //   key: 'estadisticas',
-  //   titulo: 'ESTADISTICAS',
-  //   descripcion: 'Estadísticas de empleados, ganancias y asistencias.',
-  //   enlace: 'VER ESTADISTICAS',
-  //   imagen: require('../assets/card_estadistica.png'),
-  //   alto: 150,
-  //   ajuste: 'contain',
-  // },
-  // {
-  //   key: 'servicios',
-  //   titulo: 'SERVICIOS',
-  //   descripcion: 'Administrar servicios.',
-  //   enlace: 'VER SERVICIOS',
-  //   imagen: require('../assets/card_servicios.png'),
-  //   alto: 150,
-  //   ajuste: 'cover',
-  // },
   {
     key: 'productos',
     titulo: 'PRODUCTOS',
@@ -79,7 +52,7 @@ export default function Home({ navigation }) {
     }
   };
 
-  // El ícono de menú abre las opciones (por ahora, cerrar sesión).
+  // El tab Perfil abre las opciones (por ahora, cerrar sesión).
   const abrirMenu = () => {
     Alert.alert('Menú', '¿Qué querés hacer?', [
       { text: 'Cerrar sesión', style: 'destructive', onPress: handleLogOut },
@@ -116,13 +89,6 @@ export default function Home({ navigation }) {
           resizeMode="cover"
         />
 
-        <TouchableOpacity
-          style={styles.botonEmpleados}
-          onPress={() => seccionProximamente('Registrar secciones')}
-        >
-          <Text style={styles.botonEmpleadosTexto}>Registrar secciones</Text>
-          <Ionicons name="chevron-forward" size={14} color="#fff" />
-        </TouchableOpacity>
 
         {SECCIONES.map((item) => (
           <View key={item.key} style={styles.tarjeta}>

@@ -62,7 +62,7 @@ export default function Home({ navigation }) {
 
   // Placeholder: cuando existan las pantallas, acá se navega.
   const seccionProximamente = (titulo) => {
-    Alert.alert(titulo, 'Esta sección estará disponible próximamente.');
+    Alert.alert(titulo, 'Este apartado estará disponible próximamente.');
   };
 
   return (

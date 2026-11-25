@@ -1,27 +1,16 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  Alert,
-  Platform,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { signOut } from 'firebase/auth';
-import { auth } from '../src/config/firebaseConfig';
+import { COLORES, SERIF } from '../src/theme';
 import BarberHeader from '../components/BarberHeader';
 import BarberTabBar from '../components/BarberTabBar';
 
-const DORADO = '#b08d57';
-const SERIF = Platform.select({ ios: 'Georgia', android: 'serif' });
-const FONDO = '#0f0f0f';
-const TARJETA = '#161616';
-const BORDE = 'rgba(255,255,255,0.12)';
-const GRIS = '#9b9b9b';
+const DORADO = COLORES.dorado;
+const FONDO = COLORES.fondo;
+const TARJETA = COLORES.tarjeta;
+const BORDE = COLORES.borde;
+const GRIS = COLORES.gris;
 
 // Alturas fijas pensadas para celular (las imágenes originales son muy
 // "altas" si se las muestra con su relación de aspecto real).
@@ -42,24 +31,6 @@ const SECCIONES = [
 ];
 
 export default function Home({ navigation }) {
-  const handleLogOut = async () => {
-    try {
-      await signOut(auth);
-      Alert.alert('Sesión cerrada', 'Has cerrado sesión correctamente.');
-      // El observador de Firebase muestra Login al cerrar la sesión.
-    } catch (error) {
-      Alert.alert('Error', 'Hubo un problema al cerrar sesión.');
-    }
-  };
-
-  // El tab Perfil abre las opciones (por ahora, cerrar sesión).
-  const abrirMenu = () => {
-    Alert.alert('Menú', '¿Qué querés hacer?', [
-      { text: 'Cerrar sesión', style: 'destructive', onPress: handleLogOut },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
-  };
-
   // Placeholder: cuando existan las pantallas, acá se navega.
   const seccionProximamente = (titulo) => {
     Alert.alert(titulo, 'Este apartado estará disponible próximamente.');
@@ -70,10 +41,7 @@ export default function Home({ navigation }) {
       <StatusBar style="light" />
 
       {/* ---------- Header ---------- */}
-      <BarberHeader
-        titulo="Inicio"
-        onCampana={() => seccionProximamente('Notificaciones')}
-      />
+      <BarberHeader titulo="Inicio" />
 
       {/* ---------- Contenido ---------- */}
       <ScrollView
@@ -88,7 +56,6 @@ export default function Home({ navigation }) {
           style={styles.heroImagen}
           resizeMode="cover"
         />
-
 
         {SECCIONES.map((item) => (
           <View key={item.key} style={styles.tarjeta}>
@@ -120,7 +87,7 @@ export default function Home({ navigation }) {
       <BarberTabBar
         activo="inicio"
         onPressTab={(tab) => {
-          if (tab.key === 'perfil') abrirMenu();
+          if (tab.key === 'perfil') navigation.navigate('MiPerfil');
           else seccionProximamente(tab.label);
         }}
       />
@@ -149,20 +116,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 160,
     backgroundColor: '#000',
-  },
-  botonEmpleados: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 42,
-    marginHorizontal: 16,
-    marginTop: 12,
     marginBottom: 16,
-    borderRadius: 4,
-    backgroundColor: DORADO,
   },
-  botonEmpleadosTexto: { color: '#fff', fontSize: 13, fontWeight: '600' },
 
   // Tarjetas
   tarjeta: {

@@ -1,6 +1,8 @@
 import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 
+export { mensajeErrorFirestore } from './errores';
+
 const COL = 'productos';
 const texto = (v) => String(v ?? '').trim();
 const numero = (v) => Math.max(0, Number(v) || 0);
@@ -41,11 +43,3 @@ export const actualizarProducto = (id, cambios) =>
   updateDoc(doc(db, COL, id), { ...campos(cambios), actualizadoEn: serverTimestamp() });
 
 export const eliminarProducto = (id) => deleteDoc(doc(db, COL, id));
-
-export const mensajeErrorFirestore = (e) => {
-  const c = e?.code || '';
-  if (c.includes('permission-denied')) return 'Firestore rechazó la operación. Revisá las reglas.';
-  if (c.includes('unavailable')) return 'Sin conexión con Firestore.';
-  if (c.includes('failed-precondition')) return 'Firestore no está habilitado.';
-  return e?.message || 'Error con Firebase.';
-};

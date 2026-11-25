@@ -1,64 +1,19 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ImageBackground,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
 import { auth } from '../src/config/firebaseConfig';
 import { notificar } from '../src/notify';
+import { COLORES, SERIF } from '../src/theme';
+import { soloLetras, validarCorreo, validarNombre, telefonoValido } from '../src/validaciones';
+import { mensajeErrorAuth } from '../src/erroresAuth';
+import FormInput from '../components/FormInput';
 import AvisoModal from '../components/AvisoModal';
-import {
-  activarSupresionLogin,
-  desactivarSupresionLogin,
-} from '../src/authFlow';
+import { activarSupresionLogin, desactivarSupresionLogin } from '../src/authFlow';
 
-const DORADO = '#b08d57';
-const SERIF = Platform.select({ ios: 'Georgia', android: 'serif' });
-const VERDE = '#43c463';
-const ROJO = '#e05a5a';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-
-// Dominios desechables / de prueba (para no llenar la base de correos basura).
-const DOMINIOS_BASURA = [
-  'mailinator.com',
-  'tempmail.com',
-  'temp-mail.org',
-  'guerrillamail.com',
-  '10minutemail.com',
-  'yopmail.com',
-  'throwawaymail.com',
-  'trashmail.com',
-  'sharklasers.com',
-  'getnada.com',
-  'dispostable.com',
-  'fakeinbox.com',
-  'maildrop.cc',
-  'mintemail.com',
-  'spam4.me',
-  'example.com',
-  'example.org',
-  'test.com',
-];
-
-// Solo letras (con acentos) y espacios.
-const NOMBRE_RE =
-  /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*$/;
-
-// Limpia lo que el usuario escribe: deja únicamente letras y espacios.
-const soloLetras = (valor) =>
-  valor.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g, '');
+const { dorado: DORADO, verde: VERDE, rojo: ROJO } = COLORES;
 
 const REQUISITOS = [
   { texto: '8 caracteres', test: (p) => p.length >= 8 },
@@ -66,55 +21,6 @@ const REQUISITOS = [
   { texto: 'Un número', test: (p) => /\d/.test(p) },
   { texto: 'Un carácter especial (#@?%&)', test: (p) => /[#@?%&]/.test(p) },
 ];
-
-function validarCorreo(valor) {
-  const correo = valor.trim().toLowerCase();
-  if (!EMAIL_RE.test(correo)) {
-    return 'Ingresá un correo válido, por ejemplo Usuario@email.com.';
-  }
-  const dominio = correo.split('@')[1];
-  if (DOMINIOS_BASURA.includes(dominio)) {
-    return 'Ese dominio no está permitido. Usá un correo real.';
-  }
-  return null;
-}
-
-function validarNombre(valor, campo) {
-  const v = valor.trim().replace(/\s+/g, ' ');
-  if (v.length < 2) return `Ingresá al menos 2 letras en ${campo}.`;
-  if (!NOMBRE_RE.test(v)) return `En ${campo} solo se permiten letras y espacios.`;
-  return null;
-}
-
-const telefonoValido = (valor) => {
-  const digitos = valor.replace(/\D/g, '');
-  return digitos.length >= 8 && /^[+\d\s()-]+$/.test(valor.trim());
-};
-
-// Campo reutilizable: etiqueta + input con ícono + accesorio opcional.
-function Campo({
-  label,
-  icono,
-  right,
-  containerStyle,
-  inputStyle,
-  ...props
-}) {
-  return (
-    <View>
-      <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputContainer, containerStyle]}>
-        <Ionicons name={icono} size={18} color="#cfcfcf" style={styles.icon} />
-        <TextInput
-          style={[styles.input, inputStyle]}
-          placeholderTextColor="rgba(255,255,255,0.55)"
-          {...props}
-        />
-        {right}
-      </View>
-    </View>
-  );
-}
 
 export default function SignUp({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -234,24 +140,9 @@ export default function SignUp({ navigation }) {
       setExitoVisible(true);
     } catch (error) {
       console.error('Error de registro:', error.code, error.message);
-      let msg = 'Hubo un problema al registrar el usuario.';
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          msg = 'El correo electrónico ya está en uso.';
-          break;
-        case 'auth/invalid-email':
-          msg = 'El formato del correo electrónico no es válido.';
-          break;
-        case 'auth/weak-password':
-          msg = 'La contraseña es demasiado débil.';
-          break;
-        case 'auth/network-request-failed':
-          msg = 'Error de conexión, intentá más tarde.';
-          break;
-        case 'auth/invalid-api-key':
-          msg = 'La clave API de Firebase no es válida. Revisá el archivo .env.';
-          break;
-      }
+      const msg =
+        mensajeErrorAuth(error.code, 'registro') ||
+        'Hubo un problema al registrar el usuario.';
       notificar('error', 'No se pudo registrar', msg);
     } finally {
       desactivarSupresionLogin();
@@ -299,7 +190,7 @@ export default function SignUp({ navigation }) {
               <Text style={styles.asterisco}>*</Text>
             </Text>
 
-            <Campo
+            <FormInput
               label="NOMBRE"
               icono="person-outline"
               placeholder="Ej: José Roberto"
@@ -308,7 +199,7 @@ export default function SignUp({ navigation }) {
               autoCapitalize="words"
             />
 
-            <Campo
+            <FormInput
               label="APELLIDO"
               icono="person-outline"
               placeholder="Ej: Montero"
@@ -317,7 +208,7 @@ export default function SignUp({ navigation }) {
               autoCapitalize="words"
             />
 
-            <Campo
+            <FormInput
               label="CORREO ELECTRÓNICO"
               icono="mail-outline"
               placeholder="Usuario@email.com"
@@ -333,7 +224,7 @@ export default function SignUp({ navigation }) {
               }
             />
 
-            <Campo
+            <FormInput
               label="TELÉFONO DE CONTACTO"
               icono="call-outline"
               placeholder="+54 387598987"
@@ -342,7 +233,7 @@ export default function SignUp({ navigation }) {
               keyboardType="phone-pad"
             />
 
-            <Campo
+            <FormInput
               label="CONTRASEÑA"
               icono="lock-closed-outline"
               placeholder="********"
@@ -400,7 +291,7 @@ export default function SignUp({ navigation }) {
               })}
             </View>
 
-            <Campo
+            <FormInput
               label="CONFIRMAR CONTRASEÑA"
               icono="lock-closed-outline"
               placeholder="********"
@@ -528,33 +419,6 @@ const styles = StyleSheet.create({
   },
   asterisco: { color: '#c0392b', fontWeight: '700' },
 
-  label: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    marginTop: 14,
-    marginBottom: 6,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 10,
-    height: 48,
-    paddingHorizontal: 12,
-  },
-  icon: { marginRight: 10 },
-  input: {
-    flex: 1,
-    color: '#fff',
-    fontSize: 14,
-    height: '100%',
-    paddingVertical: 0,
-    textAlignVertical: 'center',
-  },
   inputPassword: {
     fontSize: 14,
     letterSpacing: 3,

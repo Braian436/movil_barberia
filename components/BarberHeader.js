@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, Image, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const DORADO = '#b08d57';
@@ -16,10 +8,9 @@ const SERIF = Platform.select({ ios: 'Georgia', android: 'serif' });
 /**
  * Header reutilizable para las pantallas de la app.
  * Props:
- *   - titulo   : texto que va centrado (por defecto "Inicio").
- *   - onCampana: se llama al tocar la campana.
+ *   - titulo: texto que va centrado (por defecto "Inicio").
  */
-export default function BarberHeader({ titulo = 'Inicio', onCampana }) {
+export default function BarberHeader({ titulo = 'Inicio' }) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -33,11 +24,8 @@ export default function BarberHeader({ titulo = 'Inicio', onCampana }) {
 
       <Text style={styles.titulo}>{titulo}</Text>
 
-      <View style={[styles.lado, styles.derecha]}>
-        <TouchableOpacity onPress={onCampana} hitSlop={8}>
-          <Ionicons name="notifications-outline" size={22} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      {/* Espaciador vacío para mantener el título centrado. */}
+      <View style={[styles.lado, styles.derecha]} />
     </View>
   );
 }

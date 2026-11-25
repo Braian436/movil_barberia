@@ -120,11 +120,7 @@ export default function Productos({ navigation }) {
   return (
     <View style={styles.pantalla}>
       <StatusBar style="light" />
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={22} color="#fff" />
-      </TouchableOpacity>
-      <BarberHeader titulo="Productos" />
-
+      <BarberHeader titulo="Productos" onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.content}>
         <TouchableOpacity style={styles.add} onPress={() => abrir(null)}>
           <Text style={styles.addTxt}>+ Registrar producto</Text>
@@ -182,11 +178,4 @@ const styles = StyleSheet.create({
   addTxt: { color: '#fff', fontSize: 13, fontWeight: '700' },
   error: { color: COLORES.rojo, fontSize: 12, textAlign: 'center' },
   empty: { color: COLORES.gris, fontSize: 13, textAlign: 'center', marginTop: 20 },
-  header: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingHorizontal: 16,
-  paddingVertical: 15,
-  backgroundColor: '#0d0d0d',
-},
 });

@@ -49,13 +49,15 @@ export default function Home({ navigation }) {
         contentContainerStyle={styles.scrollContenido}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heroTitulo}>BARBERIA CLASE A</Text>
+        <Text style={styles.heroTitulo}>BIENVENIDO</Text>
 
         <Image
           source={require('../assets/imagen_home_barberia.png')}
           style={styles.heroImagen}
           resizeMode="cover"
         />
+
+        <View style={styles.divisor}/>
 
         {SECCIONES.map((item) => (
           <View key={item.key} style={styles.tarjeta}>
@@ -105,8 +107,9 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContenido: { paddingBottom: 24 },
   heroTitulo: {
+    textAlign: 'center',
     fontFamily: SERIF,
-    fontSize: 20,
+    fontSize: 25,
     color: DORADO,
     letterSpacing: 1.2,
     marginTop: 12,
@@ -128,7 +131,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: BORDE,
-    borderRadius: 6,
+    borderRadius: 30,
     backgroundColor: TARJETA,
     overflow: 'hidden',
   },
@@ -153,5 +156,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
+  },
+  divisor:{
+    height:1,
+    backgroundColor: '#fff',
+    marginHorizontal:25,
+    marginVertical:25,
   },
 });

@@ -1,16 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Image,
-  ImageBackground,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Keyboard,
-  Platform,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, Image, ImageBackground, StyleSheet, ScrollView, KeyboardAvoidingView, Keyboard, Platform, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

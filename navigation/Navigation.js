@@ -8,6 +8,7 @@ import { consumirSupresionLogin } from '../src/authFlow';
 import Login from '../screens/Login';
 import Home from '../screens/Home';
 import Productos from '../screens/Productos';
+import MiPerfil from '../screens/MiPerfil';
 import Registro from '../screens/SignUp';
 import RecuperarPassword from '../screens/RecuperarPassword';
 
@@ -47,6 +48,7 @@ export default function Navigation() {
           <>
             <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
             <Stack.Screen name="Productos" component={Productos} options={{ headerShown: false }} />
+            <Stack.Screen name="MiPerfil" component={MiPerfil} options={{ headerShown: false }} />
           </>
         ) : (
           <>

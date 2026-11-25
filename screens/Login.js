@@ -1,17 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  ImageBackground,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ImageBackground, KeyboardAvoidingView, ScrollView, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,15 +8,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../src/config/firebaseConfig';
 import { notificar } from '../src/notify';
+import { EMAIL_RE } from '../src/validaciones';
+import { mensajeErrorAuth } from '../src/erroresAuth';
+import { SERIF } from '../src/theme';
 
 const DORADO = '#b08d57';
 const ORO_CLARO = '#e3c98f';
 // Panel semitransparente: deja ver la foto de fondo.
 const PANEL = 'rgba(11,13,18,0.78)';
 const CREMA = '#f5efe3';
-const SERIF = Platform.select({ ios: 'Georgia', android: 'serif' });
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 const KEY_RECORDAR = 'barberia:correoRecordado';
 
 // Curvas doradas que separan la foto del panel oscuro.
@@ -115,23 +104,9 @@ export default function Login({ navigation, route }) {
       // El observador de Firebase cambia la pantalla al detectar la sesión.
     } catch (error) {
       console.error('Error de inicio de sesión:', error.code, error.message);
-      let msg = 'Hubo un problema al iniciar sesión.';
-      switch (error.code) {
-        case 'auth/invalid-email':
-          msg = 'El formato del correo no es válido.';
-          break;
-        case 'auth/invalid-credential':
-        case 'auth/wrong-password':
-        case 'auth/user-not-found':
-          msg = 'Correo o contraseña incorrectos.';
-          break;
-        case 'auth/too-many-requests':
-          msg = 'Demasiados intentos. Probá de nuevo más tarde.';
-          break;
-        case 'auth/network-request-failed':
-          msg = 'Error de conexión, intentá más tarde.';
-          break;
-      }
+      const msg =
+        mensajeErrorAuth(error.code, 'login') ||
+        'Hubo un problema al iniciar sesión.';
       notificar('error', 'No se pudo iniciar sesión', msg);
     } finally {
       setCargando(false);

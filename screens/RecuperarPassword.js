@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../src/config/firebaseConfig';
 import AuthLayout from '../components/AuthLayout';
 import { notificar } from '../src/notify';
+import { EMAIL_RE } from '../src/validaciones';
+import { mensajeErrorAuth } from '../src/erroresAuth';
 
 const DORADO = '#b08d57';
 const GRIS_CLARO = 'rgba(255,255,255,0.75)';
 const VERDE = '#43c463';
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+
+// Títulos específicos según el error (el mensaje sale de erroresAuth).
+const TITULOS = {
+  'auth/invalid-email': 'Correo inválido',
+  'auth/user-not-found': 'Correo no registrado',
+  'auth/too-many-requests': 'Demasiados intentos',
+  'auth/network-request-failed': 'Sin conexión',
+};
 
 export default function RecuperarPassword({ navigation, route }) {
   const [email, setEmail] = useState(route?.params?.email ?? '');
@@ -43,26 +45,10 @@ export default function RecuperarPassword({ navigation, route }) {
       setEnviado(true);
     } catch (error) {
       console.error('Error al enviar el correo:', error.code, error.message);
-      let titulo = 'No se pudo enviar';
-      let msg = 'Intentá de nuevo en unos minutos.';
-      switch (error.code) {
-        case 'auth/invalid-email':
-          titulo = 'Correo inválido';
-          msg = 'El correo no tiene un formato válido.';
-          break;
-        case 'auth/user-not-found':
-          titulo = 'Correo no registrado';
-          msg = 'No encontramos una cuenta con ese correo.';
-          break;
-        case 'auth/too-many-requests':
-          titulo = 'Demasiados intentos';
-          msg = 'Probá de nuevo más tarde.';
-          break;
-        case 'auth/network-request-failed':
-          titulo = 'Sin conexión';
-          msg = 'Revisá tu conexión a internet.';
-          break;
-      }
+      const titulo = TITULOS[error.code] || 'No se pudo enviar';
+      const msg =
+        mensajeErrorAuth(error.code, 'recuperar') ||
+        'Intentá de nuevo en unos minutos.';
       notificar('error', titulo, msg);
     } finally {
       setCargando(false);

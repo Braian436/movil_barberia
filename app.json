@@ -22,7 +22,14 @@
     },
     "plugins": [
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir el acceso a tus fotos para elegir tu foto de perfil.",
+          "cameraPermission": "Permitir el uso de la cámara para tomarte la foto de perfil."
+        }
+      ]
     ]
   }
 }

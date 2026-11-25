@@ -87,8 +87,11 @@ export default function Home({ navigation }) {
       <BarberTabBar
         activo="inicio"
         onPressTab={(tab) => {
-          if (tab.key === 'perfil') navigation.navigate('MiPerfil');
-          else seccionProximamente(tab.label);
+          if (tab.key === 'perfil') {
+            navigation.navigate('MiPerfil');
+          } else if (tab.key === 'inicio') {
+            return;
+          }
         }}
       />
     </View>
